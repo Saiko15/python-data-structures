@@ -1,0 +1,201 @@
+#include <iostream>
+#include <cassert>
+#include <climits>
+
+#include <vector>		// for debug
+#include <algorithm>
+using namespace std;
+
+struct Node {
+	int data { };
+	Node* next { };
+	Node(int data) :
+			data(data) {
+	}
+
+	~Node() {
+		cout << "Destroy value: " << data << "\n";
+	}
+};
+
+class LinkedList {
+private:
+	Node *head { };
+	Node *tail { };
+	int length = 0;	// let's maintain how many nodes
+
+	vector<Node*> debug_data;	// add/remove nodes you use
+
+public:
+
+	// Below 2 deletes prevent copy and assign to avoid this mistake
+	LinkedList() {
+	}
+	LinkedList(const LinkedList&) = delete;
+	LinkedList &operator=(const LinkedList &another) = delete;
+
+	void debug_print_address() {
+		for (Node* cur = head; cur; cur = cur->next)
+			cout << cur << "," << cur->data << "\t";
+		cout << "\n";
+	}
+
+	void debug_print_node(Node* node) {
+		if (node == nullptr) {
+			cout << "nullptr\n";
+			return;
+		}
+		cout << node->data << " ";
+		if (node->next == nullptr)
+			cout << "X ";
+		else
+			cout << node->next->data << " ";
+
+		if (node == head)
+			cout << "head\n";
+		else if (node == tail)
+			cout << "tail\n";
+		else
+			cout << "\n";
+	}
+	void debug_print_list(string msg = "") {
+		if (msg != "")
+			cout << msg << "\n";
+		for (int i = 0; i < (int) debug_data.size(); ++i)
+			debug_print_node(debug_data[i]);
+		cout << "************\n";
+	}
+
+	void debug_add_node(Node* node) {
+		debug_data.push_back(node);
+	}
+	void debug_remove_node(Node* node) {
+		auto it = std::find(debug_data.begin(), debug_data.end(), node);
+		if (it == debug_data.end())
+			cout << "Node does not exist\n";
+		else
+			debug_data.erase(it);
+	}
+	////////////////////////////////////////////////////////////
+
+	void print() {
+		cout<<"Length: "<<length<<"\t";
+		int len2 = 0;
+		for (Node* cur = head; cur; cur = cur->next, len2++)
+			cout << cur->data << " ";
+		cout << "\n";
+
+		assert(length == len2);
+		if(length <= 1)
+			assert(head == tail);
+	}
+
+	void insert_end(int value) {
+		Node* item = new Node(value);
+		if (!head)
+			head = tail = item;
+		else
+			tail->next = item, tail = item;
+		++length;
+
+		debug_add_node(item);
+	}
+
+	void delete_node(Node* node) {
+		debug_remove_node(node);
+		--length;
+		delete node;
+	}
+	void delete_first() {
+		if (head) {
+			//Move to next in the list
+			// and remove current
+			Node* cur = head;
+			head = head->next;
+
+			delete_node(cur);
+
+			if (!head)	// data integrity!
+				tail = nullptr;
+		}
+	}
+
+	Node* get_nth(int n) {
+		int cnt = 0;
+		for (Node* cur = head; cur; cur = cur->next)
+			if (++cnt == n)
+				return cur;
+
+		return nullptr;	// still more steps needed - NOT found
+	}
+
+	void delete_last() {		// Think modular
+		if (length <= 1) {
+			delete_first();
+			return;
+		}
+		// Get the node before tail: its order is length-1 node
+		Node* prv = get_nth(length - 1);
+
+		delete_node(tail);
+		tail = prv;
+		tail->next = nullptr;
+	}
+
+	void delete_next_node(Node* node) {
+		Node* to_delete = node->next;
+		// node->next in middle to delete
+		node->next = node->next->next;
+		delete_node(to_delete);
+	}
+
+	void delete_nth_node(int n) {
+		if (n < 1 || n > length)
+			cout << "Error. No such nth node\n";
+		else if (n == 1)
+			delete_first();
+		else if (n == length)
+			delete_last();
+		else {
+			// We must now have 3 nodes. Our node is in between
+			// Connect the node before nth with node after nth
+			// Then remove nth node
+			delete_next_node(get_nth(n - 1));
+		}
+	}
+
+	void delete_node_with_key(int value) {	// O(n) time - O(1) memory
+		if (!length)
+			cout << "Empty list!\n";
+		else if (head->data == value)
+			delete_first();
+		else {
+			for (Node *cur = head, *prv = nullptr; cur; prv = cur, cur = cur->next) {
+				if(cur->data == value) {
+					delete_next_node(prv);	// connect prv with after
+					return;
+				}
+			}
+			cout<<"Value not found!\n";
+		}
+	}
+};
+
+int main() {
+
+	LinkedList list;
+
+	list.insert_end(1);
+	list.insert_end(2);
+	list.insert_end(3);
+	list.insert_end(4);
+	list.insert_end(5);
+	list.insert_end(6);
+	list.delete_node_with_key(2);
+	list.delete_node_with_key(6);
+	list.print();
+
+	list.debug_print_list("********");
+	return 0;
+}
+
