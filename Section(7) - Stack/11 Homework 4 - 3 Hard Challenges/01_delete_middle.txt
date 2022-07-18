@@ -1,0 +1,13 @@
+Consider a doubly linked list of the stack
+We can easily have extra pointer that points to the middle
+With push or pop, we shift it a single step
+Using next/previous, we can delete it in O(1)
+
+
+
+Side note:
+Clean operation is O(1) in stack-array to REUSE it
+But linked-list is O(n) to remove all first
+
+
+so as u see, overall trade-offs
